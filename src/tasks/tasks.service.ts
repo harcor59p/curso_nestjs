@@ -1,45 +1,61 @@
 import { Injectable } from '@nestjs/common';
-import { Task, TaskStatus } from './task.entity';
-import { title } from 'process';
-import { UpdateTaskDto } from './dto/tasks.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Task } from './task.entity';
+import { CreateTaksDto, UpdateTaskDto } from './dto/tasks.dto';
 
 @Injectable()
 export class TasksService {
+    Task: any;
 
-    private task: Task[] = [{
-        id: '1',
-        title: 'frist task',
-        description: 'some task',
-        status: TaskStatus.PENDING,
-    }]
+    constructor(
+        @InjectRepository(Task) private tasksRepo: Repository<Task>
+    ) { }
+
+    // private task: Task[] = [{
+    //     id: '1',
+    //     title: 'frist task',
+    //     description: 'some task',
+    //     status: TaskStatus.PENDING,
+    // }]
+
     getAllTasks() {
-        return this.task
+        return this.tasksRepo.find();
     }
-    createTasks(titke: string, description: string) {
-        const task = {
-            id: new Date().toISOString(),
-            title,
-            description,
-            status: TaskStatus.PENDING
-
-        };
-        this.task.push(task);
-        return task;
-    }
-    deleteTasks(id: string) {
-        this.task = this.task.filter(task => task.id !== id)
+    getTaskById(id: number) : Promise<Task | null> {
+        return this.tasksRepo.findOne({
+            where : {
+                id
+            }
+        });
     }
 
-    getTaskById(id: string) : Task {
-        return this.task.find((task) => task.id === id) ;
+    createTasks(Task : CreateTaksDto) {
+        const newTask = this.tasksRepo.create(Task) ;
+        return this.tasksRepo.save(newTask) ;
     }
 
-    updateTasks(id: string , updatedFields : UpdateTaskDto) { 
+    // createTasks(title: string, description: string) {
+    //     const task = {
+    //         id: new Date().toISOString(),
+    //         title,
+    //         description,
+    //         status: TaskStatus.PENDING
 
-        const task = this.getTaskById(id) ;
-        const newTask = Object.assign(task , updatedFields) ;
-        this.task = this.task.map((task) => (task.id === id ? newTask : task))
-        return newTask ;
+    //     };
+    //     this.task.push(task);
+    //     return task;
+    // }
+
+
+
+    deleteTasks(id: number) {
+        return this.tasksRepo.delete({id})
+    }
+
+
+    updateTasks(id: number , task : UpdateTaskDto) {
+        return this.tasksRepo.update({id} , task)
     }
 
 }
